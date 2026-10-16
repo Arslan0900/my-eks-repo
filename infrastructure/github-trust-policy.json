@@ -14,7 +14,7 @@
         "StringLike": {
           "token.actions.githubusercontent.com:sub": [
             "repo:Arslan0900/my-eks-repo:*",
-            "repo:Arslan0900@1421614433/my-eks-repo@110992344:*"
+            "repo:Arslan0900@110992344/my-eks-repo@1421614433:*"
           ]
         }
       }
