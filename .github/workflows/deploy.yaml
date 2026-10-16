@@ -1,0 +1,81 @@
+name: Build, Push, Deploy to EKS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'charts/**'
+      - 'environments/**'
+      - '.github/workflows/deploy.yaml'
+
+permissions:
+  id-token: write       # Required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: my-eks-cluster
+  ECR_BACKEND: 406193642614.dkr.ecr.us-east-1.amazonaws.com/backend-app
+  ECR_FRONTEND: 406193642614.dkr.ecr.us-east-1.amazonaws.com/frontend-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::<ACCOUNT_ID>:role/GitHubActionsEKSDeploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push backend
+        run: |
+          TAG=${GITHUB_SHA::7}
+          docker build -t backend ./backend
+          docker tag backend $ECR_BACKEND:$TAG
+          docker tag backend $ECR_BACKEND:latest
+          docker push $ECR_BACKEND:$TAG
+          docker push $ECR_BACKEND:latest
+
+      - name: Build and push frontend
+        run: |
+          TAG=${GITHUB_SHA::7}
+          docker build -t frontend ./frontend
+          docker tag frontend $ECR_FRONTEND:$TAG
+          docker tag frontend $ECR_FRONTEND:latest
+          docker push $ECR_FRONTEND:$TAG
+          docker push $ECR_FRONTEND:latest
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --name ${{ env.CLUSTER_NAME }} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Deploy backend
+        run: |
+          helm upgrade --install backend ./charts/backend \
+            -f environments/dev/backend-values.yaml \
+            --set image.tag=${GITHUB_SHA::7} \
+            --wait --timeout 5m
+
+      - name: Deploy frontend
+        run: |
+          helm upgrade --install frontend ./charts/frontend \
+            -f environments/dev/frontend-values.yaml \
+            --set image.tag=${GITHUB_SHA::7} \
+            --wait --timeout 5m
+
+      - name: Verify
+        run: |
+          kubectl rollout status deployment/backend --timeout=120s
+          kubectl rollout status deployment/frontend --timeout=120s
+          kubectl get ingress

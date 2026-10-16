@@ -1,0 +1,33 @@
+replicaCount: 1
+
+image:
+  repository: ""       # Set via --set or environment values
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+readinessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 3
+  periodSeconds: 10
+
+livenessProbe:
+  enabled: true
+  path: /health
+  initialDelaySeconds: 10
+  periodSeconds: 20
+
+fullnameOverride: "backend"

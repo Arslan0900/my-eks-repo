@@ -1,0 +1,9 @@
+replicaCount: 1
+
+image:
+  repository: "406193642614.dkr.ecr.us-east-1.amazonaws.com/frontend-app"
+  tag: latest
+  pullPolicy: Always
+
+ingress:
+  enabled: true

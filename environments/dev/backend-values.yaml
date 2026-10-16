@@ -1,0 +1,11 @@
+replicaCount: 1
+
+image:
+  repository: "406193642614.dkr.ecr.us-east-1.amazonaws.com/backend-app"
+  tag: latest
+  pullPolicy: Always
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi

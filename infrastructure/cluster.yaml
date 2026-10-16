@@ -1,0 +1,29 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: my-eks-cluster
+  region: us-east-1
+  version: "1.34"
+
+managedNodeGroups:
+  - name: workers
+    instanceType: t3.small
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 2
+    spot: true
+    volumeSize: 20
+    labels:
+      role: worker
+    tags:
+      Environment: dev
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: aws-ebs-csi-driver
+
+iam:
+  withOIDC: true
